@@ -175,7 +175,7 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
             TPCNSigmaKaon = fpidResponse->NumberOfSigmasTPC(track, AliPID::kKaon);
             TOFNSigmaKaon = fpidResponse->NumberOfSigmasTOF(track, AliPID::kKaon);
 
-            if(TMath::Abs(TPCNSigmaKaon) <= 3 && (TMath::Abs(TOFNSigmaKaon) <= 3 || TOFNSigmaKaon == 1000)) {
+            if(TMath::Abs(TPCNSigmaKaon) <= 2 && (TMath::Abs(TOFNSigmaKaon) <= 2 || TOFNSigmaKaon == 1000)) {
 
                 if(track->Charge() == 1){
                     kPlus_list.push_back(track);

@@ -10,7 +10,7 @@ void runMacro_mass(bool local=true, bool full=true, bool gridMerge=true){
   // int endIndex = 28;
 
   char* work_dir = "D0_mass";
-  char* output_dir = "lambda_cuts";
+  char* output_dir = "lambda_cuts_2sigma_kaon";
 
   //If we want to download test files from grid then run in one swoop (usually just run completely locally):
   bool gridTest = false;
