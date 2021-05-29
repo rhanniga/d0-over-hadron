@@ -52,6 +52,9 @@ class AliAnalysisTaskD0Mass : public AliAnalysisTaskSE {
   TList* fOutputList; //!>! output list
 
   THnSparseF* fD0Dist;  //!>! single particle D0 dist
+  THnSparseF* fTriggeredD0Dist;  //!>! single particle D0 dist with trigger pt axis
+  THnSparseF* fHFD0Dist;  //!>! single particle D0 dist (from HF)
+  THnSparseF* fTriggeredHFD0Dist;  //!>! single particle D0 dist (from HF) with trigger pt axis
 
   AliPIDResponse *fpidResponse; //!>!pid response
   AliMultSelection *fMultSelection; //!>!mult selection
@@ -59,7 +62,10 @@ class AliAnalysisTaskD0Mass : public AliAnalysisTaskSE {
   //hand written functions:
   AliMotherContainer DaughtersToMother(AliAODTrack* track1, AliAODTrack* track2, double mass1, double mass2);
   void FillSingleParticleDist(std::vector<AliMotherContainer> particle_list, THnSparse* fDist);
+  void FillTriggeredSingleParticleDist(std::vector<AliMotherContainer> particle_list, THnSparse* fDist, double maxTriggerPt);
+  double FindMaxTriggerPt(std::vector<AliMotherContainer> particle_list, std::vector<AliAODTrack*> trigger_list);
   bool PassDaughterCuts(AliAODTrack *track);
+  bool PassTriggerCuts(AliAODTrack *track);
 
   ClassDef(AliAnalysisTaskD0Mass, 0);
 

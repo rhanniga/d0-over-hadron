@@ -10,7 +10,9 @@ AliAnalysisTaskD0Mass::AliAnalysisTaskD0Mass() :
     fpidResponse{0},
     fAOD{0},
     fOutputList{0},
-    fD0Dist{0}
+    fD0Dist{0}, 
+    fHFD0Dist{0},
+    fTriggeredD0Dist{0}
 {
     MULT_LOW = 0;
     MULT_HIGH = 20;
@@ -23,7 +25,9 @@ AliAnalysisTaskD0Mass::AliAnalysisTaskD0Mass(const char *name) :
     fpidResponse{0},
     fAOD{0},
     fOutputList{0},
-    fD0Dist{0}
+    fD0Dist{0}, 
+    fHFD0Dist{0},
+    fTriggeredD0Dist{0}
 {
 
     DefineInput(0, TChain::Class());
@@ -57,11 +61,25 @@ void AliAnalysisTaskD0Mass::UserCreateOutputObjects()
     fD0Dist = new THnSparseF("fD0Dist", "D0 Distribution", 4, dist_bins, dist_mins, dist_maxes);
     fOutputList->Add(fD0Dist);
 
+    fHFD0Dist = new THnSparseF("fHFD0Dist", "D0 Distribution from HF vertex thing", 4, dist_bins, dist_mins, dist_maxes);
+    fOutputList->Add(fHFD0Dist);
+
+    //Distribution axes are: Pt, Phi, Eta, InvMass
+    int triggered_dist_bins[5] = {60, 16, 20, 400, 50};
+    double triggered_dist_mins[5] = {0, -3.14, -2, 0.4, 0};
+    double triggered_dist_maxes[5] = {15, 3.14, 2, 2.4, 10};
+
+    fTriggeredD0Dist = new THnSparseF("fTriggeredD0Dist", "D0 Distribution with max trigger pt axis", 5, triggered_dist_bins, triggered_dist_mins, triggered_dist_maxes);
+    fOutputList->Add(fTriggeredD0Dist);
+
+    fTriggeredHFD0Dist = new THnSparseF("fTriggeredHFD0Dist", "D0 Distribution from HF vertex thing with max trigger pt axis", 5, triggered_dist_bins, triggered_dist_mins, triggered_dist_maxes);
+    fOutputList->Add(fTriggeredHFD0Dist);
+
     PostData(1, fOutputList);
 
 }
 
-void AliAnalysisTaskD0Mass::FillSingleParticleDist(std::vector<AliAnalysisTaskD0Mass::AliMotherContainer> particle_list, THnSparse* fDist)
+void AliAnalysisTaskD0Mass::FillSingleParticleDist(std::vector<AliAnalysisTaskD0Mass::AliMotherContainer> particle_list, THnSparse* fDist, double maxTriggerPt)
 {
 
     double dist_points[4]; //Pt, Phi, Eta, Mass
@@ -71,6 +89,22 @@ void AliAnalysisTaskD0Mass::FillSingleParticleDist(std::vector<AliAnalysisTaskD0
         dist_points[1] = particle.Phi();
         dist_points[2] = particle.Eta();
         dist_points[3] = particle.M();
+        fDist->Fill(dist_points);
+    }
+
+}
+
+void AliAnalysisTaskD0Mass::FillTriggeredSingleParticleDist(std::vector<AliAnalysisTaskD0Mass::AliMotherContainer> particle_list, THnSparse* fDist, double maxTriggerPt)
+{
+
+    double dist_points[4]; //Pt, Phi, Eta, Mass
+    for(int i = 0; i < (int)particle_list.size(); i++) {
+        auto particle = particle_list[i].particle;
+        dist_points[0] = particle.Pt();
+        dist_points[1] = particle.Phi();
+        dist_points[2] = particle.Eta();
+        dist_points[3] = particle.M();
+        dist_points[4] = maxTriggerPt;
         fDist->Fill(dist_points);
     }
 
@@ -92,7 +126,7 @@ AliAnalysisTaskD0Mass::AliMotherContainer AliAnalysisTaskD0Mass::DaughtersToMoth
 
 bool AliAnalysisTaskD0Mass::PassDaughterCuts(AliAODTrack *track){
 
-    Bool_t pass = kTRUE;
+    bool pass = kTRUE;
 
     pass = pass && (TMath::Abs(track->Eta()) <= 0.8);
     pass = pass && (track->Pt() >= 0.15);
@@ -103,6 +137,18 @@ bool AliAnalysisTaskD0Mass::PassDaughterCuts(AliAODTrack *track){
 
     float ratio = (track->GetTPCNclsF() > 0)  ? track->GetTPCCrossedRows()/track->GetTPCNclsF() : 0;
     pass = pass && (ratio > 0.8);
+
+    return pass;
+}
+
+bool AliAnalysisTaskD0Mass::TriggerCuts(AliAODTrack *track){
+
+    bool pass = kTRUE;
+
+    pass = pass && (TMath::Abs(track->Eta()) <= 0.8);
+    pass = pass && (track->Pt() >= 0.15);
+
+    pass = pass && track->TestBit(AliAODTrack::kIsHybridGCG);
 
     return pass;
 }
@@ -144,12 +190,16 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
     std::vector<AliAODTrack*> kMinus_list;
     std::vector<AliAODTrack*> piPlus_list;
     std::vector<AliAODTrack*> piMinus_list;
+    std::vector<AliAODTrack*> trigger_list;
 
     for(int trackNum = 0; trackNum < numTracks; trackNum++) {
     
 
         AliAODTrack* track = static_cast<AliAODTrack*>(fAOD->GetTrack(trackNum));
         if(!track) continue;
+
+
+        if(PassTriggerCuts(track)) trigger_list.push_back(track);
 
         if(PassDaughterCuts(track)) {
             double TPCNSigmaPion = 1000;
@@ -175,7 +225,7 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
             TPCNSigmaKaon = fpidResponse->NumberOfSigmasTPC(track, AliPID::kKaon);
             TOFNSigmaKaon = fpidResponse->NumberOfSigmasTOF(track, AliPID::kKaon);
 
-            if(TMath::Abs(TPCNSigmaKaon) <= 2 && (TMath::Abs(TOFNSigmaKaon) <= 2 || TOFNSigmaKaon == 1000)) {
+            if(TMath::Abs(TPCNSigmaKaon) <= 3 && (TMath::Abs(TOFNSigmaKaon) <= 3 || TOFNSigmaKaon == 1000)) {
 
                 if(track->Charge() == 1){
                     kPlus_list.push_back(track);
@@ -211,7 +261,21 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
         }
     }
 
+    double maxTriggerPt = FindMaxTriggerPt(D0_list, trigger_list);
+
     FillSingleParticleDist(D0_list, fD0Dist);
+    FillTriggeredSingleParticleDist(D0_list, fD0Dist, maxTriggerPt);
+    
+
+    //Making list of possible D0s (from hf finder):
+    std::vector<AliAnalysisTaskD0Mass::AliMotherContainer> hf_D0_list;
+
+
+    double maxTriggerPt = FindMaxTriggerPt(hf_D0_list, trigger_list);
+
+    FillSingleParticleDist(hf_D0_list, fHFD0Dist);
+    FillTriggeredSingleParticleDist(hf_D0_list, fTriggeredHFD0Dist, maxTriggerPt);
+
     PostData(1, fOutputList);
 
 }
