@@ -5,12 +5,12 @@ void runMacro_mass(bool local=true, bool full=true, bool gridMerge=true){
 
   //Starting and ending index of the array containing the run numbers, specifies which range to run over
   int startIndex = 0;
-  int endIndex = 28;
+  int endIndex = 0;
   // int startIndex = 15;
   // int endIndex = 28;
 
   char* work_dir = "D0_mass";
-  char* output_dir = "lambda_cuts_2sigma_kaon";
+  char* output_dir = "sub_test4";
 
   //If we want to download test files from grid then run in one swoop (usually just run completely locally):
   bool gridTest = false;
@@ -21,7 +21,10 @@ void runMacro_mass(bool local=true, bool full=true, bool gridMerge=true){
 
   AliAnalysisManager *manage = new AliAnalysisManager("");
   AliAODInputHandler *aodH = new AliAODInputHandler();
+  AliAODOutputHandler *aodHO = new AliAODOutputHandler();
+
   manage->SetInputEventHandler(aodH);
+  manage->SetOutputEventHandler(aodHO);
 
 
   //MULT SELECTION:
@@ -45,9 +48,9 @@ void runMacro_mass(bool local=true, bool full=true, bool gridMerge=true){
 
   if(local) {
     TChain *chain = new TChain("aodTree");
-    chain->Add("~/data/pPb_5_tev_1.root");
-    chain->Add("~/data/pPb_5_tev_69.root");
-    chain->Add("~/data/pPb_5_tev_420.root");
+    chain->Add("~/Wonderland/alice/data/pPb_5_tev_1.root");
+    chain->Add("~/Wonderland/alice/data/pPb_5_tev_69.root");
+    chain->Add("~/Wonderland/alice/data/pPb_5_tev_420.root");
     manage->StartAnalysis("local", chain);
   }
 

@@ -79,7 +79,7 @@ void AliAnalysisTaskD0Mass::UserCreateOutputObjects()
 
 }
 
-void AliAnalysisTaskD0Mass::FillSingleParticleDist(std::vector<AliAnalysisTaskD0Mass::AliMotherContainer> particle_list, THnSparse* fDist, double maxTriggerPt)
+void AliAnalysisTaskD0Mass::FillSingleParticleDist(std::vector<AliAnalysisTaskD0Mass::AliMotherContainer> particle_list, THnSparse* fDist)
 {
 
     double dist_points[4]; //Pt, Phi, Eta, Mass
@@ -97,7 +97,7 @@ void AliAnalysisTaskD0Mass::FillSingleParticleDist(std::vector<AliAnalysisTaskD0
 void AliAnalysisTaskD0Mass::FillTriggeredSingleParticleDist(std::vector<AliAnalysisTaskD0Mass::AliMotherContainer> particle_list, THnSparse* fDist, double maxTriggerPt)
 {
 
-    double dist_points[4]; //Pt, Phi, Eta, Mass
+    double dist_points[5]; //Pt, Phi, Eta, Mass, max trigger pt in event
     for(int i = 0; i < (int)particle_list.size(); i++) {
         auto particle = particle_list[i].particle;
         dist_points[0] = particle.Pt();
@@ -141,7 +141,7 @@ bool AliAnalysisTaskD0Mass::PassDaughterCuts(AliAODTrack *track){
     return pass;
 }
 
-bool AliAnalysisTaskD0Mass::TriggerCuts(AliAODTrack *track){
+bool AliAnalysisTaskD0Mass::PassTriggerCuts(AliAODTrack *track){
 
     bool pass = kTRUE;
 
@@ -162,6 +162,22 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
         std::abort();
     }
 
+    // std::cout << fAOD->GetList()->FindObject("D0toKpi") << std::endl;
+
+    AliAnalysisManager* currentMgr = AliAnalysisManager::GetAnalysisManager();
+    if(!currentMgr) {
+        AliFatal("NO MANAGER CONNECTED, EXITING");
+    }
+
+    std::cout << currentMgr->GetExtraFiles() << " are the extra files" << std::endl;
+
+    AliAODHandler *aodHandler = (AliAODHandler*)((AliAnalysisManager::GetAnalysisManager())->GetOutputEventHandler());
+    std::cout << aodHandler << std::endl;
+    //  if(aodHandler->GetExtensions()) {
+    //     AliAODExtension *ext = (AliAODExtension*)aodHandler->GetExtensions()->FindObject("AliAOD.VertexingHF.root");
+    //     AliAODEvent *aodFromExt = ext->GetAOD();
+    //     TClonesArray* test = (TClonesArray*)aodFromExt->GetList()->FindObject("D0toKpi");
+    // }
 
     fpidResponse = fInputHandler->GetPIDResponse();
 
@@ -261,7 +277,8 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
         }
     }
 
-    double maxTriggerPt = FindMaxTriggerPt(D0_list, trigger_list);
+    // double maxTriggerPt = FindMaxTriggerPt(D0_list, trigger_list);
+    double maxTriggerPt = 3;
 
     FillSingleParticleDist(D0_list, fD0Dist);
     FillTriggeredSingleParticleDist(D0_list, fD0Dist, maxTriggerPt);
@@ -271,7 +288,7 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
     std::vector<AliAnalysisTaskD0Mass::AliMotherContainer> hf_D0_list;
 
 
-    double maxTriggerPt = FindMaxTriggerPt(hf_D0_list, trigger_list);
+    //  maxTriggerPt = FindMaxTriggerPt(hf_D0_list, trigger_list);
 
     FillSingleParticleDist(hf_D0_list, fHFD0Dist);
     FillTriggeredSingleParticleDist(hf_D0_list, fTriggeredHFD0Dist, maxTriggerPt);

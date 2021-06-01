@@ -13,11 +13,13 @@
 #include "TH3D.h"
 #include "AliAODEvent.h"
 #include "AliAODInputHandler.h"
+#include "AliAODOutputHandler.h"
 #include "AliPID.h"
 #include "TChain.h"
 #include "TVector.h"
 #include "AliEventPoolManager.h"
 #include "AliCFParticle.h"
+#include "AliAnalysisManager.h"
 
 //These includes probably aren't necessary but I feel like it's proper etiquette
 #include <vector>
