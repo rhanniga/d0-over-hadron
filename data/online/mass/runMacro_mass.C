@@ -10,7 +10,7 @@ void runMacro_mass(bool local=true, bool full=true, bool gridMerge=true){
   // int endIndex = 28;
 
   char* work_dir = "D0_mass";
-  char* output_dir = "sub_test4";
+  char* output_dir = "sub_test6";
 
   //If we want to download test files from grid then run in one swoop (usually just run completely locally):
   bool gridTest = false;
@@ -21,10 +21,13 @@ void runMacro_mass(bool local=true, bool full=true, bool gridMerge=true){
 
   AliAnalysisManager *manage = new AliAnalysisManager("");
   AliAODInputHandler *aodH = new AliAODInputHandler();
-  AliAODOutputHandler *aodHO = new AliAODOutputHandler();
-
   manage->SetInputEventHandler(aodH);
+
+  // OUTPUT HANDLER (needed to access sister AODs???)
+  AliAODHandler *aodHO = new AliAODHandler();
+  aodHO->SetOutputFileName("AliAOD.root");
   manage->SetOutputEventHandler(aodHO);
+
 
 
   //MULT SELECTION:
@@ -36,6 +39,9 @@ void runMacro_mass(bool local=true, bool full=true, bool gridMerge=true){
   //PID response:
   gInterpreter->ProcessLine(Form(".x %s(kFALSE)", gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C")));
 
+  //HF vertexing:
+  gInterpreter->ProcessLine(Form(".x %s(kFALSE)", gSystem->ExpandPathName("$ALICE_PHYSICS/PWGHF/vertexingHF/macros/AddTaskVertexingHF.C")));
+  manage->RegisterExtraFile("AliAID.VertexingHF.root");
 
 
   gInterpreter->LoadMacro("AliAnalysisTaskD0Mass.cxx++g");

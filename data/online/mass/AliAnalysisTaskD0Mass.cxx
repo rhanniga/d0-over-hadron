@@ -169,15 +169,21 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
         AliFatal("NO MANAGER CONNECTED, EXITING");
     }
 
-    std::cout << currentMgr->GetExtraFiles() << " are the extra files" << std::endl;
+    AliAODHandler *aodHandler = (AliAODHandler*)currentMgr->GetOutputEventHandler();
+    // std::cout << aodHandler->GetExtensions() << std::endl;
 
-    AliAODHandler *aodHandler = (AliAODHandler*)((AliAnalysisManager::GetAnalysisManager())->GetOutputEventHandler());
-    std::cout << aodHandler << std::endl;
+    TClonesArray* test = 0x0;
+    TString testName = "D0toKpi";
+    test = (TClonesArray*)fAOD->GetList()->FindObject(testName.Data());
+    std::cout << test << std::endl;
+
     //  if(aodHandler->GetExtensions()) {
     //     AliAODExtension *ext = (AliAODExtension*)aodHandler->GetExtensions()->FindObject("AliAOD.VertexingHF.root");
     //     AliAODEvent *aodFromExt = ext->GetAOD();
-    //     TClonesArray* test = (TClonesArray*)aodFromExt->GetList()->FindObject("D0toKpi");
+    //     test = (TClonesArray*)aodFromExt->GetList()->FindObject("D0toKpi");
     // }
+
+    // std::cout << test << std::endl;
 
     fpidResponse = fInputHandler->GetPIDResponse();
 

@@ -16,7 +16,6 @@ AliAnalysisTaskD0Mass* AddD0MassTask(TString name = "D0Mass") {
 
   if(!task) return 0x0;
 
-  manage->RegisterExtraFile("AliAOD.VertexingHF.root");
   manage->AddTask(task);
 
   manage->ConnectInput(task, 0, manage->GetCommonInputContainer());

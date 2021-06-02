@@ -13,7 +13,7 @@
 #include "TH3D.h"
 #include "AliAODEvent.h"
 #include "AliAODInputHandler.h"
-#include "AliAODOutputHandler.h"
+#include "AliAODHandler.h"
 #include "AliPID.h"
 #include "TChain.h"
 #include "TVector.h"
