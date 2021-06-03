@@ -23,10 +23,10 @@ void runMacro_mass(bool local=true, bool full=true, bool gridMerge=true){
   AliAODInputHandler *aodH = new AliAODInputHandler();
   manage->SetInputEventHandler(aodH);
 
-  // OUTPUT HANDLER (needed to access sister AODs???)
-  AliAODHandler *aodHO = new AliAODHandler();
-  aodHO->SetOutputFileName("AliAOD.root");
-  manage->SetOutputEventHandler(aodHO);
+  /* // OUTPUT HANDLER (needed to access sister AODs???) */
+  /* AliAODHandler *aodHO = new AliAODHandler(); */
+  /* aodHO->SetOutputFileName("AliAOD.root"); */
+  /* manage->SetOutputEventHandler(aodHO); */
 
 
 
@@ -39,9 +39,9 @@ void runMacro_mass(bool local=true, bool full=true, bool gridMerge=true){
   //PID response:
   gInterpreter->ProcessLine(Form(".x %s(kFALSE)", gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C")));
 
-  //HF vertexing:
-  gInterpreter->ProcessLine(Form(".x %s(kFALSE)", gSystem->ExpandPathName("$ALICE_PHYSICS/PWGHF/vertexingHF/macros/AddTaskVertexingHF.C")));
-  manage->RegisterExtraFile("AliAID.VertexingHF.root");
+  /* //HF vertexing: */
+  /* gInterpreter->ProcessLine(Form(".x %s(kFALSE)", gSystem->ExpandPathName("$ALICE_PHYSICS/PWGHF/vertexingHF/macros/AddTaskVertexingHF.C"))); */
+  /* manage->RegisterExtraFile("AliAID.VertexingHF.root"); */
 
 
   gInterpreter->LoadMacro("AliAnalysisTaskD0Mass.cxx++g");
@@ -75,6 +75,7 @@ void runMacro_mass(bool local=true, bool full=true, bool gridMerge=true){
     // select the input data
     alienHandler->SetGridDataDir("/alice/data/2016/LHC16q/");
     alienHandler->SetDataPattern("pass1_FAST/AOD190/*/*AOD.root");
+    alienHandler->SetFriendChainName("./AliAOD.VertexingHF.root");
     // MC has no prefix, data has prefix 000
     alienHandler->SetRunPrefix("000");
 
