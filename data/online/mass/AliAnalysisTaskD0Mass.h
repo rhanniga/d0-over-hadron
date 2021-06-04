@@ -20,6 +20,7 @@
 #include "AliEventPoolManager.h"
 #include "AliCFParticle.h"
 #include "AliAnalysisManager.h"
+#include "AliAODRecoDecayHF2Prong.h"
 
 //These includes probably aren't necessary but I feel like it's proper etiquette
 #include <vector>
@@ -64,6 +65,7 @@ class AliAnalysisTaskD0Mass : public AliAnalysisTaskSE {
   //hand written functions:
   AliMotherContainer DaughtersToMother(AliAODTrack* track1, AliAODTrack* track2, double mass1, double mass2);
   void FillSingleParticleDist(std::vector<AliMotherContainer> particle_list, THnSparse* fDist);
+  void FillHFD0Dist(TClonesArray* hf_d0s, THnSparse* fDist);
   void FillTriggeredSingleParticleDist(std::vector<AliMotherContainer> particle_list, THnSparse* fDist, double maxTriggerPt);
   double FindMaxTriggerPt(std::vector<AliMotherContainer> particle_list, std::vector<AliAODTrack*> trigger_list);
   bool PassDaughterCuts(AliAODTrack *track);

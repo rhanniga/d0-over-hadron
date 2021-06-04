@@ -94,6 +94,23 @@ void AliAnalysisTaskD0Mass::FillSingleParticleDist(std::vector<AliAnalysisTaskD0
 
 }
 
+void AliAnalysisTaskD0Mass::FillHFD0Dist(TClonesArray* hf_d0s, THnSparse* fDist)
+{
+
+    double dist_points[4]; //Pt, Phi, Eta, Mass
+    int numD0s = hf_d0s->GetEntriesFast();
+
+    for(int iD0 = 0; iD0 < numD0s; iD0++) {
+        AliAODRecoDecayHF2Prong* d0 = (AliAODRecoDecayHF2Prong *)hf_d0s->UncheckedAt(iD0);
+        dist_points[0] = d0->Pt();
+        dist_points[1] = d0->Phi();
+        dist_points[2] = d0->Eta();
+        dist_points[3] = d0->InvMassD0();
+        fDist->Fill(dist_points);
+    }
+
+}
+
 void AliAnalysisTaskD0Mass::FillTriggeredSingleParticleDist(std::vector<AliAnalysisTaskD0Mass::AliMotherContainer> particle_list, THnSparse* fDist, double maxTriggerPt)
 {
 
@@ -169,21 +186,6 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
         AliFatal("NO MANAGER CONNECTED, EXITING");
     }
 
-    AliAODHandler *aodHandler = (AliAODHandler*)currentMgr->GetOutputEventHandler();
-    // std::cout << aodHandler->GetExtensions() << std::endl;
-
-    TClonesArray* test = 0x0;
-    TString testName = "D0toKpi";
-    test = (TClonesArray*)fAOD->GetList()->FindObject(testName.Data());
-    std::cout << test << std::endl;
-
-    //  if(aodHandler->GetExtensions()) {
-    //     AliAODExtension *ext = (AliAODExtension*)aodHandler->GetExtensions()->FindObject("AliAOD.VertexingHF.root");
-    //     AliAODEvent *aodFromExt = ext->GetAOD();
-    //     test = (TClonesArray*)aodFromExt->GetList()->FindObject("D0toKpi");
-    // }
-
-    // std::cout << test << std::endl;
 
     fpidResponse = fInputHandler->GetPIDResponse();
 
@@ -263,6 +265,7 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
     std::vector<AliAnalysisTaskD0Mass::AliMotherContainer> D0_list;
 
 
+
     for(int i = 0; i < (int)piMinus_list.size(); i++) {
         for(int j = 0; j < (int) kPlus_list.size(); j++) {
             auto pion = piMinus_list[i];
@@ -289,6 +292,26 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
     FillSingleParticleDist(D0_list, fD0Dist);
     FillTriggeredSingleParticleDist(D0_list, fD0Dist, maxTriggerPt);
     
+    // THIS IS THE HF VERTEXING SECTION!!!!!!!!!!!!!!!!!!!
+
+    TClonesArray* hf_D0_array = 0x0;
+    TString arrayName = "D0toKpi";
+    hf_D0_array = (TClonesArray*)fAOD->GetList()->FindObject(arrayName.Data());
+    if(!hf_D0_array) {
+        std::cout << "NO D0 ARRAY FOUND" << std::endl;
+        return;
+    }
+
+    // int nD0s_hf = hf_D0_array->GetEntriesFast();
+
+    // for(int iD0 = 0; iD0 < nD0s_hf; iD0++) {
+    //     AliAODRecoDecayHF2Prong* D0 = (AliAODRecoDecayHF2Prong *)hf_D0_array->UncheckedAt(iD0);
+    //     AliAODTrack* daughterFirst = (AliAODTrack*)D0->GetDaughter(0);
+    //     AliAODTrack* daughterSecond = (AliAODTrack*)D0->GetDaughter(1);
+    //     std::cout << daughterFirst->GetMostProbablePID() << ", " << daughterFirst->Charge() << " is D1 (pid, charge)" << std::endl;
+    //     std::cout << daughterSecond->GetMostProbablePID() << ", " << daughterSecond->Charge() << " is D2 (pid, charge)" << std::endl;
+    // }
+
 
     //Making list of possible D0s (from hf finder):
     std::vector<AliAnalysisTaskD0Mass::AliMotherContainer> hf_D0_list;
@@ -296,7 +319,8 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
 
     //  maxTriggerPt = FindMaxTriggerPt(hf_D0_list, trigger_list);
 
-    FillSingleParticleDist(hf_D0_list, fHFD0Dist);
+    // FillSingleParticleDist(hf_D0_list, fHFD0Dist);
+    FillHFD0Dist(hf_D0_array, fHFD0Dist);
     FillTriggeredSingleParticleDist(hf_D0_list, fTriggeredHFD0Dist, maxTriggerPt);
 
     PostData(1, fOutputList);
