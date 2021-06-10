@@ -21,6 +21,9 @@
 #include "AliCFParticle.h"
 #include "AliAnalysisManager.h"
 #include "AliAODRecoDecayHF2Prong.h"
+#include "AliPhysicsSelectionTask.h"
+#include "TSystem.h"
+#include "AliAnalysisAlien.h"
 
 //These includes probably aren't necessary but I feel like it's proper etiquette
 #include <vector>
