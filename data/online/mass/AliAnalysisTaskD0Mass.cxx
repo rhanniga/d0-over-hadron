@@ -101,10 +101,55 @@ void AliAnalysisTaskD0Mass::FillHFD0Dist(TClonesArray* hf_d0s, THnSparse* fDist)
     int numD0s = hf_d0s->GetEntriesFast();
 
     for(int iD0 = 0; iD0 < numD0s; iD0++) {
+
         AliAODRecoDecayHF2Prong* d0 = (AliAODRecoDecayHF2Prong *)hf_d0s->UncheckedAt(iD0);
+
         dist_points[0] = d0->Pt();
         dist_points[1] = d0->Phi();
         dist_points[2] = d0->Eta();
+
+        double daughter0_TPCNSigmaPion = 1000;
+        double daughter0_TOFNSigmaPion = 1000;
+        double daughter1_TPCNSigmaPion = 1000;
+        double daughter1_TOFNSigmaPion = 1000;
+
+        daughter0_TPCNSigmaPion = fpidResponse->NumberOfSigmasTPC((AliAODTrack*)d0->GetDaughter(0), AliPID::kPion);
+        daughter0_TOFNSigmaPion = fpidResponse->NumberOfSigmasTOF((AliAODTrack*)d0->GetDaughter(0), AliPID::kPion);
+        daughter1_TPCNSigmaPion = fpidResponse->NumberOfSigmasTPC((AliAODTrack*)d0->GetDaughter(1), AliPID::kPion);
+        daughter1_TOFNSigmaPion = fpidResponse->NumberOfSigmasTOF((AliAODTrack*)d0->GetDaughter(1), AliPID::kPion);
+
+        double daughter0_TPCNSigmaKaon = 1000;
+        double daughter0_TOFNSigmaKaon = 1000;
+        double daughter1_TPCNSigmaKaon = 1000;
+        double daughter1_TOFNSigmaKaon = 1000;
+
+        daughter0_TPCNSigmaKaon = fpidResponse->NumberOfSigmasTPC((AliAODTrack*)d0->GetDaughter(0), AliPID::kKaon);
+        daughter0_TOFNSigmaKaon = fpidResponse->NumberOfSigmasTOF((AliAODTrack*)d0->GetDaughter(0), AliPID::kKaon);
+        daughter1_TPCNSigmaKaon = fpidResponse->NumberOfSigmasTPC((AliAODTrack*)d0->GetDaughter(1), AliPID::kKaon);
+        daughter1_TOFNSigmaKaon = fpidResponse->NumberOfSigmasTOF((AliAODTrack*)d0->GetDaughter(1), AliPID::kKaon);
+        
+        bool posPion = TMath::Abs(daughter0_TPCNSigmaPion) <= 3 && (TMath::Abs(daughter0_TOFNSigmaPion) <= 3 || daughter0_TOFNSigmaPion == 1000)
+
+        if(TMath::Abs(TPCNSigmaPion) <= 3 && (TMath::Abs(TOFNSigmaPion) <= 3 || TOFNSigmaPion == 1000)) {
+
+            if(track->Charge() == 1){
+                piPlus_list.push_back(track);
+            }
+            else {
+                piMinus_list.push_back(track);
+            }
+        }
+
+        if(TMath::Abs(TPCNSigmaKaon) <= 2 && (TMath::Abs(TOFNSigmaKaon) <= 2 || TOFNSigmaKaon == 1000)) {
+
+            if(track->Charge() == 1){
+                kPlus_list.push_back(track);
+            }
+            else {
+                kMinus_list.push_back(track);
+            }
+        }
+
         dist_points[3] = d0->InvMassD0();
         fDist->Fill(dist_points);
     }
