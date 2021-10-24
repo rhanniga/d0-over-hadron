@@ -58,6 +58,7 @@ class AliAnalysisTaskD0Mass : public AliAnalysisTaskSE {
   TList* fOutputList; //!>! output list
 
   THnSparseF* fD0Dist;  //!>! single particle D0 dist
+  THnSparseF* fD0V0Dist;  //!>! single particle D0 dist using V0 finder
   THnSparseF* fTriggeredD0Dist;  //!>! single particle D0 dist with trigger pt axis
   THnSparseF* fHFD0Dist;  //!>! single particle D0 dist (from HF)
   THnSparseF* fTriggeredHFD0Dist;  //!>! single particle D0 dist (from HF) with trigger pt axis

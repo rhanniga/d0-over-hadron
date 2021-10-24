@@ -1,6 +1,5 @@
 #include "AliAnalysisTaskD0Mass.h"
 
-//BOTH OF THESE ARE WEIRD, BUT APPARENTLY NECESSARRY
 class AliAnalysisTaskD0Mass;
 ClassImp(AliAnalysisTaskD0Mass);
 
@@ -11,6 +10,7 @@ AliAnalysisTaskD0Mass::AliAnalysisTaskD0Mass() :
     fAOD{0},
     fOutputList{0},
     fD0Dist{0}, 
+    fD0V0Dist{0}, 
     fHFD0Dist{0},
     fTriggeredD0Dist{0}
 {
@@ -26,6 +26,7 @@ AliAnalysisTaskD0Mass::AliAnalysisTaskD0Mass(const char *name) :
     fAOD{0},
     fOutputList{0},
     fD0Dist{0}, 
+    fD0V0Dist{0}, 
     fHFD0Dist{0},
     fTriggeredD0Dist{0}
 {
@@ -33,7 +34,7 @@ AliAnalysisTaskD0Mass::AliAnalysisTaskD0Mass(const char *name) :
     DefineInput(0, TChain::Class());
     DefineOutput(1, TList::Class());
     MULT_LOW = 0;
-    MULT_HIGH = 20;
+    MULT_HIGH = 80;
     CENT_ESTIMATOR = "V0A";
     DAUGHTER_TRK_BIT = AliAODTrack::kTrkGlobalNoDCA; // = 16
 }
@@ -60,6 +61,9 @@ void AliAnalysisTaskD0Mass::UserCreateOutputObjects()
 
     fD0Dist = new THnSparseF("fD0Dist", "D0 Distribution", 4, dist_bins, dist_mins, dist_maxes);
     fOutputList->Add(fD0Dist);
+
+    fD0V0Dist = new THnSparseF("fD0V0Dist", "D0 Distribution using V0 finder", 4, dist_bins, dist_mins, dist_maxes);
+    fOutputList->Add(fD0V0Dist);
 
     fHFD0Dist = new THnSparseF("fHFD0Dist", "D0 Distribution from HF vertex thing", 4, dist_bins, dist_mins, dist_maxes);
     fOutputList->Add(fHFD0Dist);
@@ -333,6 +337,7 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
     // THIS IS THE HF VERTEXING SECTION!!!!!!!!!!!!!!!!!!!
 
     TClonesArray* hf_D0_array = 0x0;
+    TClonesArray* hf_D0_array = 0x0;
     TString arrayName = "D0toKpi";
     hf_D0_array = (TClonesArray*)fAOD->GetList()->FindObject(arrayName.Data());
     if(!hf_D0_array) {
@@ -350,6 +355,62 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
     //     std::cout << daughterSecond->GetMostProbablePID() << ", " << daughterSecond->Charge() << " is D2 (pid, charge)" << std::endl;
     // }
 
+    std::vector<AliMotherContainer> D0_V0_list;
+
+    int numV0s = fAOD->GetNumberOfV0s();
+    for(int i = 0; i < numV0s; i++) {
+        AliAODv0 *v0 = fAOD->GetV0(i);
+
+        if(v0->GetOnFlyStatus()) continue;
+
+        AliAODTrack* posTrack = (AliAODTrack*) v0->GetDaughter(0);
+        AliAODTrack* negTrack = (AliAODTrack*) v0->GetDaughter(1);
+
+        // Occasionally returns null, not quite sure why...
+        if(!posTrack || !negTrack) continue;
+        if(!(PassDaughterCuts(posTrack) && PassDaughterCuts(negTrack))) continue;
+
+        double TPCNSigmaPiPlus = 1000;
+        double TOFNSigmaPiPlus = 1000;
+
+        double TPCNSigmaKMinus = 1000;
+        double TOFNSigmaKMinus = 1000;
+
+        TPCNSigmaPiPlus = fpidResponse->NumberOfSigmasTPC(posTrack, AliPID::kPion);
+        TOFNSigmaPiPlus = fpidResponse->NumberOfSigmasTOF(posTrack, AliPID::kPion);
+
+        TPCNSigmaKMinus = fpidResponse->NumberOfSigmasTPC(negTrack, AliPID::kKaon);
+        TOFNSigmaKMinus = fpidResponse->NumberOfSigmasTOF(negTrack, AliPID::kKaon);
+
+        bool isPosTrackPion = TMath::Abs(TPCNSigmaPiPlus) <= 3 && (TMath::Abs(TOFNSigmaPiPlus) <= 3 || TOFNSigmaPiPlus == 1000);
+        bool isNegTrackKaon = TMath::Abs(TPCNSigmaKMinus) <= 3 && (TMath::Abs(TOFNSigmaKMinus) <= 3 || TOFNSigmaKMinus == 1000);
+
+        double TPCNSigmaKPlus = 1000;
+        double TOFNSigmaKPlus = 1000;
+
+        double TPCNSigmaPiMinus = 1000;
+        double TOFNSigmaPiMinus = 1000;
+
+
+        TPCNSigmaKPlus = fpidResponse->NumberOfSigmasTPC(posTrack, AliPID::kKaon);
+        TOFNSigmaKPlus = fpidResponse->NumberOfSigmasTOF(posTrack, AliPID::kKaon);
+
+        TPCNSigmaPiMinus = fpidResponse->NumberOfSigmasTPC(negTrack, AliPID::kPion);
+        TOFNSigmaPiMinus = fpidResponse->NumberOfSigmasTOF(negTrack, AliPID::kPion);
+
+        bool isPosTrackKaon = TMath::Abs(TPCNSigmaKPlus) <= 3 && (TMath::Abs(TOFNSigmaKPlus) <= 3 || TOFNSigmaKPlus == 1000);
+        bool isNegTrackPion = TMath::Abs(TPCNSigmaPiMinus) <= 3 && (TMath::Abs(TOFNSigmaPiMinus) <= 3 || TOFNSigmaPiMinus == 1000);
+
+        if(isNegTrackKaon && isPosTrackPion) {
+            auto D0 = DaughtersToMother(posTrack, negTrack, 0.1396, 0.4937);
+            D0_V0_list.push_back(D0);
+        }
+
+        if(isPosTrackKaon && isNegTrackPion) {
+            auto D0 = DaughtersToMother(negTrack, posTrack, 0.1396, 0.4937);
+            D0_V0_list.push_back(D0);
+        }
+    }
 
     //Making list of possible D0s (from hf finder):
     std::vector<AliAnalysisTaskD0Mass::AliMotherContainer> hf_D0_list;
@@ -360,6 +421,8 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
     // FillSingleParticleDist(hf_D0_list, fHFD0Dist);
     FillHFD0Dist(hf_D0_array, fHFD0Dist);
     FillTriggeredSingleParticleDist(hf_D0_list, fTriggeredHFD0Dist, maxTriggerPt);
+
+    FillSingleParticleDist(D0_V0_list, fD0V0Dist);
 
     PostData(1, fOutputList);
 
