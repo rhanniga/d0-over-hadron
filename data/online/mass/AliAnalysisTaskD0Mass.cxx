@@ -337,7 +337,6 @@ void AliAnalysisTaskD0Mass::UserExec(Option_t*)
     // THIS IS THE HF VERTEXING SECTION!!!!!!!!!!!!!!!!!!!
 
     TClonesArray* hf_D0_array = 0x0;
-    TClonesArray* hf_D0_array = 0x0;
     TString arrayName = "D0toKpi";
     hf_D0_array = (TClonesArray*)fAOD->GetList()->FindObject(arrayName.Data());
     if(!hf_D0_array) {

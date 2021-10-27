@@ -4,13 +4,13 @@
 void runMacro_mass(bool local=true, bool full=true, bool gridMerge=true){
 
   //Starting and ending index of the array containing the run numbers, specifies which range to run over
-  int startIndex = 0;
-  int endIndex = 0;
+  int startIndex = 21;
+  int endIndex = 28;
   // int startIndex = 15;
   // int endIndex = 28;
 
   char* work_dir = "D0_mass";
-  char* output_dir = "test";
+  char* output_dir = "v0_test";
 
   //If we want to download test files from grid then run in one swoop (usually just run completely locally):
   bool gridTest = false;
